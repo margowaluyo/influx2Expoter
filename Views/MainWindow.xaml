@@ -2,7 +2,7 @@
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
  Title="InfluxDB2 Exporter - Configuration"
- Height="720" Width="1200"
+ Height="792" Width="1440"
  WindowStartupLocation="CenterScreen"
  Background="#1f1f1f"
  FontFamily="Segoe UI"
@@ -25,7 +25,7 @@
  </Grid.ColumnDefinitions>
 
  <!-- Left title block (centered) -->
- <Border Background="#1F7A4D" BorderBrush="#1E74BD" BorderThickness="3" CornerRadius="3" Padding="12" HorizontalAlignment="Stretch" VerticalAlignment="Center">
+ <Border Background="#1F7A4D" CornerRadius="3" Padding="12" HorizontalAlignment="Stretch" VerticalAlignment="Center">
  <TextBlock Text="InfluxDB2 Exporter" Foreground="White" FontSize="36" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center"/>
  </Border>
 
@@ -52,9 +52,12 @@
  <ColumnDefinition Width="Auto"/>
  </Grid.ColumnDefinitions>
  <Grid.RowDefinitions>
- <RowDefinition Height="Auto"/> <!-- row0: host/org/token -->
- <RowDefinition Height="6"/> <!-- spacer -->
- <RowDefinition Height="Auto"/> <!-- row2: port/bucket/status -->
+ <RowDefinition Height="Auto"/>
+ <!-- row0: host/org/token -->
+ <RowDefinition Height="6"/>
+ <!-- spacer -->
+ <RowDefinition Height="Auto"/>
+ <!-- row2: port/bucket/status -->
  </Grid.RowDefinitions>
 
  <!-- Row0: Host, Org, Token -->
@@ -82,36 +85,70 @@
  <!-- Status under token -->
  <TextBlock Grid.Column="8" Grid.Row="2" FontFamily="Segoe MDL2 Assets" Text="&#xE946;" FontSize="14" VerticalAlignment="Center" Margin="12,0,6,0"/>
  <TextBlock Grid.Column="9" Grid.Row="2" Text="Status" FontSize="13" VerticalAlignment="Center" Foreground="#222" Margin="0,0,6,0"/>
- <Border Grid.Column="10" Grid.Row="2" CornerRadius="3" Padding="6,2" BorderThickness="1" HorizontalAlignment="Left">
+ <Border Grid.Column="10" Grid.Row="2" CornerRadius="4" Padding="8,3" BorderThickness="1" HorizontalAlignment="Left" MinWidth="180" MinHeight="26">
  <Border.Style>
  <Style TargetType="Border">
- <Setter Property="Background" Value="#CCCCCC"/>
- <Setter Property="BorderBrush" Value="#BBBBBB"/>
+ <!-- Default: other/unknown errors -->
+ <Setter Property="Background" Value="#BDBDBD"/>
+ <Setter Property="BorderBrush" Value="#9E9E9E"/>
  <Style.Triggers>
- <DataTrigger Binding="{Binding ConnectionStatus}" Value="Connected">
- <Setter Property="Background" Value="#2BB24C"/>
- <Setter Property="BorderBrush" Value="#23913F"/>
+ <!-- Default/disconnected when null or empty -->
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="{x:Null}">
+ <Setter Property="Background" Value="#D50000"/>
+ <Setter Property="BorderBrush" Value="#9B0000"/>
  </DataTrigger>
- <DataTrigger Binding="{Binding ConnectionStatus}" Value="Connecting">
- <Setter Property="Background" Value="#FFB74D"/>
- <Setter Property="BorderBrush" Value="#F57C00"/>
- </DataTrigger>
- <DataTrigger Binding="{Binding ConnectionStatus}" Value="Failed">
- <Setter Property="Background" Value="#E57373"/>
- <Setter Property="BorderBrush" Value="#C62828"/>
- </DataTrigger>
- <DataTrigger Binding="{Binding ConnectionStatus}" Value="Fail">
- <Setter Property="Background" Value="#E57373"/>
- <Setter Property="BorderBrush" Value="#C62828"/>
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="">
+ <Setter Property="Background" Value="#D50000"/>
+ <Setter Property="BorderBrush" Value="#9B0000"/>
  </DataTrigger>
  <DataTrigger Binding="{Binding ConnectionStatus}" Value="Disconnected">
- <Setter Property="Background" Value="#E57373"/>
- <Setter Property="BorderBrush" Value="#C62828"/>
+ <Setter Property="Background" Value="#D50000"/>
+ <Setter Property="BorderBrush" Value="#9B0000"/>
+ </DataTrigger>
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="Fail">
+ <Setter Property="Background" Value="#D50000"/>
+ <Setter Property="BorderBrush" Value="#9B0000"/>
+ </DataTrigger>
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="Failed">
+ <Setter Property="Background" Value="#D50000"/>
+ <Setter Property="BorderBrush" Value="#9B0000"/>
+ </DataTrigger>
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="Connecting">
+ <Setter Property="Background" Value="#FF6D00"/>
+ <Setter Property="BorderBrush" Value="#E65100"/>
+ </DataTrigger>
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="Connected">
+ <Setter Property="Background" Value="#00C853"/>
+ <Setter Property="BorderBrush" Value="#009624"/>
  </DataTrigger>
  </Style.Triggers>
  </Style>
  </Border.Style>
- <TextBlock Text="{Binding ConnectionStatus}" Foreground="White" FontWeight="Bold" HorizontalAlignment="Center" TextAlignment="Center"/>
+ <TextBlock Text="{Binding DisplayStatus, TargetNullValue=Disconnected, FallbackValue=Disconnected}" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center">
+ <TextBlock.Style>
+ <Style TargetType="TextBlock">
+ <!-- Default text color for grey background -->
+ <Setter Property="Foreground" Value="Black"/>
+ <Style.Triggers>
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="Disconnected">
+ <Setter Property="Foreground" Value="White"/>
+ </DataTrigger>
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="Fail">
+ <Setter Property="Foreground" Value="White"/>
+ </DataTrigger>
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="Failed">
+ <Setter Property="Foreground" Value="White"/>
+ </DataTrigger>
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="Connecting">
+ <Setter Property="Foreground" Value="White"/>
+ </DataTrigger>
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="Connected">
+ <Setter Property="Foreground" Value="White"/>
+ </DataTrigger>
+ </Style.Triggers>
+ </Style>
+ </TextBlock.Style>
+ </TextBlock>
  </Border>
 
  <!-- Connect button on the far right, vertically centered across the header rows -->
@@ -137,14 +174,34 @@
  <Border Grid.Row="2" Background="#F7F6F2" CornerRadius="3" Margin="0,8,0,0" BorderBrush="#D0D0D0" BorderThickness="1">
  <Grid>
  <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
- <Button Padding="22,10" Margin="0,0,0,12" FontSize="22" FontWeight="Bold" Foreground="White" Background="#FF7A2E" BorderThickness="0" Command="{Binding NewQueryCommand}" IsEnabled="{Binding IsConnected}">
+ <Button Padding="22,10" Margin="0,0,0,12" FontSize="22" FontWeight="Bold" Foreground="White" Background="#FF7A2E" BorderThickness="0" Command="{Binding NewQueryCommand}">
+ <Button.Style>
+ <Style TargetType="Button">
+ <Setter Property="IsEnabled" Value="False"/>
+ <Style.Triggers>
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="Connected">
+ <Setter Property="IsEnabled" Value="True"/>
+ </DataTrigger>
+ </Style.Triggers>
+ </Style>
+ </Button.Style>
  <StackPanel Orientation="Horizontal">
  <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="20" Text="&#xE710;" Margin="0,0,8,0"/>
  <TextBlock Text="New Query"/>
  </StackPanel>
  </Button>
 
- <Button Padding="22,10" FontSize="20" FontWeight="SemiBold" Foreground="White" Background="#3A5C86" BorderThickness="0" Command="{Binding OpenTemplateCommand}" IsEnabled="{Binding IsConnected}">
+ <Button Padding="22,10" FontSize="20" FontWeight="SemiBold" Foreground="White" Background="#3A5C86" BorderThickness="0" Command="{Binding OpenTemplateCommand}">
+ <Button.Style>
+ <Style TargetType="Button">
+ <Setter Property="IsEnabled" Value="False"/>
+ <Style.Triggers>
+ <DataTrigger Binding="{Binding ConnectionStatus}" Value="Connected">
+ <Setter Property="IsEnabled" Value="True"/>
+ </DataTrigger>
+ </Style.Triggers>
+ </Style>
+ </Button.Style>
  <StackPanel Orientation="Horizontal">
  <TextBlock FontFamily="Segoe MDL2 Assets" FontSize="20" Text="&#xE7C3;" Margin="0,0,8,0"/>
  <TextBlock Text="Query Template"/>

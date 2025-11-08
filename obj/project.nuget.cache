@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "jaLADYM8K3Q=",
+  "dgSpecHash": "kZ29qF5sejA=",
   "success": true,
-  "projectFilePath": "C:\\influx2Exporter\\influx2Exporter.csproj",
+  "projectFilePath": "C:\\influx2Expoter\\influx2Exporter.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\setia\\.nuget\\packages\\closedxml\\0.105.0\\closedxml.0.105.0.nupkg.sha512",
     "C:\\Users\\setia\\.nuget\\packages\\closedxml.parser\\2.0.0\\closedxml.parser.2.0.0.nupkg.sha512",

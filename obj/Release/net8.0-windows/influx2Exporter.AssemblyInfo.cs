@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("influx2Exporter")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ce7a0029e1e98bfe2941f64907043dc9ceca0e77")]
 [assembly: System.Reflection.AssemblyProductAttribute("influx2Exporter")]
 [assembly: System.Reflection.AssemblyTitleAttribute("influx2Exporter")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
