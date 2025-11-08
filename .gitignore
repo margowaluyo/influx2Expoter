@@ -1,1 +1,36 @@
-.vs
+# Build outputs
+/bin/
+/obj/
+/out/
+/publish/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sdf
+
+# Rider / IntelliJ
+.idea/
+
+# NuGet
+*.nupkg
+packages/
+project.lock.json
+project.fragment.lock.json
+.nuget/
+
+# VS Code
+.vscode/
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
+
+# Logs
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store
