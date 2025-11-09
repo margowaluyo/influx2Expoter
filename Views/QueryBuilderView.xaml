@@ -50,7 +50,15 @@
  <RowDefinition Height="*"/>
  </Grid.RowDefinitions>
  <DockPanel Grid.Row="0">
- <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding DataContext.AvailableFieldNames, RelativeSource={RelativeSource AncestorType=UserControl}}" SelectedItem="{Binding SelectedName, Mode=TwoWay}" MinWidth="180" MaxDropDownHeight="300"/>
+ <ComboBox DockPanel.Dock="Left"
+ ItemsSource="{Binding DataContext.AvailableFieldNames, RelativeSource={RelativeSource AncestorType=UserControl}}"
+ SelectedItem="{Binding SelectedName, Mode=TwoWay}"
+ MinWidth="180"
+ MaxDropDownHeight="300"
+ ScrollViewer.CanContentScroll="True"
+ ScrollViewer.VerticalScrollBarVisibility="Auto"
+ VirtualizingPanel.IsVirtualizing="True"
+ VirtualizingPanel.ScrollUnit="Item"/>
  <Button DockPanel.Dock="Right" Content="-" Width="22" Height="22" Margin="6,0,0,0" Command="{Binding DataContext.RemoveFilterPanelCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
  </DockPanel>
  <TextBox Grid.Row="1" Margin="0,6,0,6" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>

@@ -123,7 +123,8 @@ namespace influx2Exporter.ViewModels
  await SafeSchemaCall("tagKeys", async () =>
  {
  var tagKeys = await QueryFluxStringsAsync(queryApi, $"import \"influxdata/influxdb/schema\"\nschema.tagKeys(bucket: \"{Bucket}\")");
- foreach (var key in tagKeys.Take(6))
+ // Removed Take(6) limit so all tag keys are loaded
+ foreach (var key in tagKeys)
  {
  await SafeSchemaCall($"tagValues:{key}", async () =>
  {
