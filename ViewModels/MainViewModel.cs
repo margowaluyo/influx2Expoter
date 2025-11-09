@@ -2,12 +2,15 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Microsoft.Win32;
+using ClosedXML.Excel;
 using InfluxDB.Client;
 using InfluxDB.Client.Api;
 
@@ -24,6 +27,9 @@ namespace influx2Exporter.ViewModels
  private string _toTime = "23:59:59";
  private DataTable? _previewTable;
  private string _lastSchemaError = string.Empty;
+ // New DateTimePicker bound values
+ private DateTime? _fromDateTime;
+ private DateTime? _toDateTime;
 
  // properties
  public string Host { get => _host; set { if (SetProperty(ref _host, value)) RaiseCanExec(); } }
@@ -38,11 +44,14 @@ namespace influx2Exporter.ViewModels
  public bool IsQueryBusy { get => _isQueryBusy; set { if (SetProperty(ref _isQueryBusy, value)) RaiseCanExec(); } }
  public string LastSchemaError { get => _lastSchemaError; private set => SetProperty(ref _lastSchemaError, value); }
 
- // Time range
+ // Legacy time controls
  public DateTime? FromDate { get => _fromDate; set => SetProperty(ref _fromDate, value); }
  public string FromTime { get => _fromTime; set => SetProperty(ref _fromTime, value); }
  public DateTime? ToDate { get => _toDate; set => SetProperty(ref _toDate, value); }
  public string ToTime { get => _toTime; set => SetProperty(ref _toTime, value); }
+ // New datetime pickers
+ public DateTime? FromDateTime { get => _fromDateTime; set => SetProperty(ref _fromDateTime, value); }
+ public DateTime? ToDateTime { get => _toDateTime; set => SetProperty(ref _toDateTime, value); }
 
  // schema filters fetched from server
  public ObservableCollection<QueryFilter> Filters { get; } = new();
@@ -62,6 +71,8 @@ namespace influx2Exporter.ViewModels
  public ICommand SubmitQueryCommand { get; }
  public ICommand AddFilterPanelCommand { get; }
  public ICommand RemoveFilterPanelCommand { get; }
+ public ICommand ExportCsvCommand { get; }
+ public ICommand ExportExcelCommand { get; }
 
  public MainViewModel()
  {
@@ -72,6 +83,8 @@ namespace influx2Exporter.ViewModels
  SubmitQueryCommand = new AsyncRelayCommand(SubmitQueryAsync, CanSubmitQuery);
  AddFilterPanelCommand = new SimpleRelayCommand(AddFilterPanel, () => IsConnected && Filters.Count >0);
  RemoveFilterPanelCommand = new RelayCommand<FilterPanel>(RemoveFilterPanel, p => p != null && Panels.Contains(p) && Panels.Count >1);
+ ExportCsvCommand = new SimpleRelayCommand(ExportCsv, () => PreviewTable != null && PreviewTable.Rows.Count >0);
+ ExportExcelCommand = new SimpleRelayCommand(ExportExcel, () => PreviewTable != null && PreviewTable.Rows.Count >0);
  }
 
  private bool CanSubmitQuery() => IsConnected && !IsQueryBusy && Filters.Any(f => f.Values.Any(v => v.IsSelected));
@@ -79,41 +92,12 @@ namespace influx2Exporter.ViewModels
 
  private void AddFilter(string name, System.Collections.Generic.IEnumerable<string> values) => AddFilterToCollection(name, values);
  private void AddFilterToCollection(string name, System.Collections.Generic.IEnumerable<string> values)
- {
- var f = new QueryFilter { Name = name };
- foreach (var v in values.Distinct().OrderBy(s => s)) f.Values.Add(new QueryFilterValue { Value = v });
- Filters.Add(f);
- RaiseCanExec();
- }
+ { var f = new QueryFilter { Name = name }; foreach (var v in values.Distinct().OrderBy(s => s)) f.Values.Add(new QueryFilterValue { Value = v }); Filters.Add(f); RaiseCanExec(); }
 
- private void RebuildAvailableFields()
- {
- AvailableFieldNames.Clear();
- foreach (var n in Filters.Select(f => f.Name)) AvailableFieldNames.Add(n);
- }
-
- private void EnsureAtLeastOnePanel()
- {
- if (Panels.Count ==0)
- {
- var defaultName = AvailableFieldNames.FirstOrDefault() ?? string.Empty;
- Panels.Add(new FilterPanel(this) { SelectedName = defaultName });
- }
- }
-
- private void AddFilterPanel()
- {
- var defaultName = AvailableFieldNames.FirstOrDefault() ?? string.Empty;
- Panels.Add(new FilterPanel(this) { SelectedName = defaultName });
- RaiseCanExec();
- }
- private void RemoveFilterPanel(FilterPanel? panel)
- {
- if (panel == null) return;
- if (Panels.Count <=1) return; // keep at least one panel visible
- Panels.Remove(panel);
- RaiseCanExec();
- }
+ private void RebuildAvailableFields() { AvailableFieldNames.Clear(); foreach (var n in Filters.Select(f => f.Name)) AvailableFieldNames.Add(n); }
+ private void EnsureAtLeastOnePanel() { if (Panels.Count ==0) { var defaultName = AvailableFieldNames.FirstOrDefault() ?? string.Empty; Panels.Add(new FilterPanel(this) { SelectedName = defaultName }); } }
+ private void AddFilterPanel() { var defaultName = AvailableFieldNames.FirstOrDefault() ?? string.Empty; Panels.Add(new FilterPanel(this) { SelectedName = defaultName }); RaiseCanExec(); }
+ private void RemoveFilterPanel(FilterPanel? panel) { if (panel == null || Panels.Count <=1) return; Panels.Remove(panel); RaiseCanExec(); }
 
  private async Task LoadFiltersAsync()
  {
@@ -225,7 +209,7 @@ namespace influx2Exporter.ViewModels
  { if (!host.StartsWith("http://", StringComparison.OrdinalIgnoreCase) && !host.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) host = "http://" + host.Trim(); var b = new UriBuilder(host); if (int.TryParse(port, out var p) && p >0) b.Port = p; else if (b.Port <=0) b.Port =8086; return b.Uri; }
 
  private void RaiseCanExec()
- { (ConnectCommand as IRelayCommand)?.RaiseCanExecuteChanged(); (NewQueryCommand as IRelayCommand)?.RaiseCanExecuteChanged(); (OpenTemplateCommand as IRelayCommand)?.RaiseCanExecuteChanged(); (SubmitQueryCommand as IRelayCommand)?.RaiseCanExecuteChanged(); (AddFilterPanelCommand as IRelayCommand)?.RaiseCanExecuteChanged(); (RemoveFilterPanelCommand as IRelayCommand)?.RaiseCanExecuteChanged(); }
+ { (ConnectCommand as IRelayCommand)?.RaiseCanExecuteChanged(); (NewQueryCommand as IRelayCommand)?.RaiseCanExecuteChanged(); (OpenTemplateCommand as IRelayCommand)?.RaiseCanExecuteChanged(); (SubmitQueryCommand as IRelayCommand)?.RaiseCanExecuteChanged(); (AddFilterPanelCommand as IRelayCommand)?.RaiseCanExecuteChanged(); (RemoveFilterPanelCommand as IRelayCommand)?.RaiseCanExecuteChanged(); (ExportCsvCommand as IRelayCommand)?.RaiseCanExecuteChanged(); (ExportExcelCommand as IRelayCommand)?.RaiseCanExecuteChanged(); }
 
  private async Task SubmitQueryAsync()
  {
@@ -269,14 +253,63 @@ namespace influx2Exporter.ViewModels
  private static string EscapeFlux(string s) => s.Replace("\\", "\\\\").Replace("\"", "\\\"");
  private (string start, string stop) BuildRange()
  {
+ // Prefer DateTimePicker if set; fallback to legacy date+time fields
  try
  {
- var from = FromDate ?? DateTime.UtcNow.AddHours(-1); var to = ToDate ?? DateTime.UtcNow;
- if (TimeSpan.TryParse(FromTime, out var ft)) from = new DateTime(from.Year, from.Month, from.Day, ft.Hours, ft.Minutes, ft.Seconds, DateTimeKind.Utc);
- if (TimeSpan.TryParse(ToTime, out var tt)) to = new DateTime(to.Year, to.Month, to.Day, tt.Hours, tt.Minutes, tt.Seconds, DateTimeKind.Utc);
+ if (FromDateTime.HasValue || ToDateTime.HasValue)
+ {
+ var from = FromDateTime ?? DateTime.UtcNow.AddHours(-1);
+ var to = ToDateTime ?? DateTime.UtcNow;
  return (from.ToUniversalTime().ToString("o"), to.ToUniversalTime().ToString("o"));
  }
+ var f = FromDate ?? DateTime.UtcNow.AddHours(-1);
+ var t = ToDate ?? DateTime.UtcNow;
+ if (TimeSpan.TryParse(FromTime, out var ft)) f = new DateTime(f.Year, f.Month, f.Day, ft.Hours, ft.Minutes, ft.Seconds, DateTimeKind.Utc);
+ if (TimeSpan.TryParse(ToTime, out var tt)) t = new DateTime(t.Year, t.Month, t.Day, tt.Hours, tt.Minutes, tt.Seconds, DateTimeKind.Utc);
+ return (f.ToUniversalTime().ToString("o"), t.ToUniversalTime().ToString("o"));
+ }
  catch { var e = DateTime.UtcNow; return (e.AddHours(-1).ToString("o"), e.ToString("o")); }
+ }
+
+ private void ExportCsv()
+ {
+ if (PreviewTable == null || PreviewTable.Rows.Count ==0) return;
+ var sfd = new SaveFileDialog { Filter = "CSV files (*.csv)|*.csv", FileName = $"export_{DateTime.Now:yyyyMMdd_HHmmss}.csv" };
+ if (sfd.ShowDialog() != true) return;
+ var sep = ",";
+ var sb = new StringBuilder();
+ // header
+ for (int i =0; i < PreviewTable.Columns.Count; i++)
+ {
+ if (i >0) sb.Append(sep);
+ sb.Append(EscapeCsv(PreviewTable.Columns[i].ColumnName));
+ }
+ sb.AppendLine();
+ // rows
+ foreach (DataRow row in PreviewTable.Rows)
+ {
+ for (int i =0; i < PreviewTable.Columns.Count; i++)
+ {
+ if (i >0) sb.Append(sep);
+ var val = row[i]?.ToString() ?? string.Empty;
+ sb.Append(EscapeCsv(val));
+ }
+ sb.AppendLine();
+ }
+ System.IO.File.WriteAllText(sfd.FileName, sb.ToString(), new UTF8Encoding(true));
+ }
+ private static string EscapeCsv(string s)
+ { bool needQuote = s.Contains(',') || s.Contains('"') || s.Contains('\n') || s.Contains('\r'); if (needQuote) return '"' + s.Replace("\"", "\"\"") + '"'; return s; }
+
+ private void ExportExcel()
+ {
+ if (PreviewTable == null || PreviewTable.Rows.Count ==0) return;
+ var sfd = new SaveFileDialog { Filter = "Excel files (*.xlsx)|*.xlsx", FileName = $"export_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx" };
+ if (sfd.ShowDialog() != true) return;
+ using var wb = new XLWorkbook();
+ var ws = wb.Worksheets.Add(PreviewTable, "Data");
+ ws.Columns().AdjustToContents();
+ wb.SaveAs(sfd.FileName);
  }
 
  public event PropertyChangedEventHandler? PropertyChanged; protected bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? name = null) { if (Equals(storage, value)) return false; storage = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name)); return true; }
@@ -288,14 +321,11 @@ namespace influx2Exporter.ViewModels
 
  // Panel VM used in QueryBuilder UI
  public class FilterPanel : INotifyPropertyChanged
- {
- private readonly MainViewModel _root; private string _selectedName = string.Empty; private string _searchText = string.Empty;
- public FilterPanel(MainViewModel root) { _root = root; }
+ { private readonly MainViewModel _root; private string _selectedName = string.Empty; private string _searchText = string.Empty; public FilterPanel(MainViewModel root) { _root = root; }
  public string SelectedName { get => _selectedName; set { if (_selectedName != value) { _selectedName = value ?? string.Empty; OnPropertyChanged(); OnPropertyChanged(nameof(ValuesView)); } } }
  public string SearchText { get => _searchText; set { if (_searchText != value) { _searchText = value ?? string.Empty; OnPropertyChanged(); OnPropertyChanged(nameof(ValuesView)); } } }
  public QueryFilter? SelectedFilter => _root.Filters.FirstOrDefault(f => string.Equals(f.Name, SelectedName, StringComparison.OrdinalIgnoreCase));
- public System.Collections.Generic.IEnumerable<QueryFilterValue> ValuesView
- { get { var src = SelectedFilter?.Values ?? new ObservableCollection<QueryFilterValue>(); if (string.IsNullOrWhiteSpace(SearchText)) return src; var q = SearchText.Trim(); return src.Where(v => v.Value?.IndexOf(q, StringComparison.OrdinalIgnoreCase) >=0); } }
+ public System.Collections.Generic.IEnumerable<QueryFilterValue> ValuesView { get { var src = SelectedFilter?.Values ?? new ObservableCollection<QueryFilterValue>(); if (string.IsNullOrWhiteSpace(SearchText)) return src; var q = SearchText.Trim(); return src.Where(v => v.Value?.IndexOf(q, StringComparison.OrdinalIgnoreCase) >=0); } }
  public event PropertyChangedEventHandler? PropertyChanged; protected void OnPropertyChanged([CallerMemberName] string? n = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(n)); }
 
  public interface IRelayCommand { void RaiseCanExecuteChanged(); }

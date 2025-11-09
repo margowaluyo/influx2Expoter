@@ -12,7 +12,9 @@
     <PackageReference Include="ClosedXML" Version="0.105.0" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="CsvHelper" Version="33.1.0" />
+    <PackageReference Include="Extended.Wpf.Toolkit" Version="5.0.0" />
     <PackageReference Include="InfluxDB.Client" Version="4.18.0" />
+    <PackageReference Include="MahApps.Metro" Version="2.4.11" />
   </ItemGroup>
 
   <ItemGroup>
