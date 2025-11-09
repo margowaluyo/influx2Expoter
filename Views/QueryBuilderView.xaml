@@ -1,0 +1,96 @@
+<UserControl x:Class="influx2Exporter.Views.QueryBuilderView"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ <UserControl.Resources>
+ <!-- Simple style (removed watermark setter that overwrote bound Text) -->
+ <Style x:Key="SearchBoxStyle" TargetType="TextBox">
+ <Setter Property="Foreground" Value="Black"/>
+ <Setter Property="Padding" Value="2"/>
+ </Style>
+ </UserControl.Resources>
+ <Grid>
+ <Grid.RowDefinitions>
+ <RowDefinition Height="Auto"/>
+ <RowDefinition Height="Auto"/>
+ <RowDefinition Height="*"/>
+ </Grid.RowDefinitions>
+
+ <!-- Top bar -->
+ <Border Grid.Row="0" Background="#efede5" Padding="12" BorderBrush="#C7C7C7" BorderThickness="0,0,0,1">
+ <Grid>
+ <Grid.ColumnDefinitions>
+ <ColumnDefinition Width="*"/>
+ <ColumnDefinition Width="Auto"/>
+ <ColumnDefinition Width="Auto"/>
+ </Grid.ColumnDefinitions>
+ <TextBlock Text="Query Builder" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"/>
+ <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center">
+ <TextBlock Text="Time range" FontWeight="Bold" Margin="0,0,12,0" VerticalAlignment="Center"/>
+ <DatePicker SelectedDate="{Binding FromDate}" Width="140" Margin="0,0,6,0"/>
+ <TextBox Width="90" Margin="0,0,12,0" Text="{Binding FromTime}" ToolTip="HH:mm:ss"/>
+ <TextBlock Text="to" FontWeight="Bold" Margin="0,0,12,0" VerticalAlignment="Center"/>
+ <DatePicker SelectedDate="{Binding ToDate}" Width="140" Margin="0,0,6,0"/>
+ <TextBox Width="90" Margin="0,0,12,0" Text="{Binding ToTime}" ToolTip="HH:mm:ss"/>
+ </StackPanel>
+ <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+ <Button Content="Add to Template" Padding="16,6" Margin="0,0,12,0" Background="#0A84FF" Foreground="White" BorderBrush="#0A84FF"/>
+ <Button Content="Submit Query" Padding="16,6" Background="#2E7D32" Foreground="White" BorderBrush="#2E7D32" Command="{Binding SubmitQueryCommand}"/>
+ </StackPanel>
+ </Grid>
+ </Border>
+
+ <!-- Panels area -->
+ <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Height="220" Background="#14141A" Padding="12">
+ <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+ <ItemsControl ItemsSource="{Binding Panels}">
+ <ItemsControl.ItemsPanel>
+ <ItemsPanelTemplate>
+ <StackPanel Orientation="Horizontal"/>
+ </ItemsPanelTemplate>
+ </ItemsControl.ItemsPanel>
+ <ItemsControl.ItemTemplate>
+ <DataTemplate>
+ <Border Width="220" Margin="0,0,12,0" Background="#D0D0D0" Padding="4" BorderBrush="#9A9A9A" BorderThickness="1">
+ <Grid>
+ <Grid.RowDefinitions>
+ <RowDefinition Height="Auto"/>
+ <RowDefinition Height="Auto"/>
+ <RowDefinition Height="*"/>
+ </Grid.RowDefinitions>
+ <DockPanel Grid.Row="0">
+ <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding DataContext.AvailableFieldNames, RelativeSource={RelativeSource AncestorType=UserControl}}"
+ SelectedItem="{Binding SelectedName, Mode=TwoWay}" MinWidth="160"/>
+ <Button DockPanel.Dock="Right" Content="-" Width="20" Height="20" Margin="4,0,0,0"
+ Command="{Binding DataContext.RemoveFilterPanelCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
+ </DockPanel>
+ <TextBox Grid.Row="1" Margin="0,4,0,4" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource SearchBoxStyle}"/>
+ <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+ <ItemsControl ItemsSource="{Binding ValuesView}">
+ <ItemsControl.ItemTemplate>
+ <DataTemplate>
+ <CheckBox Content="{Binding Value}" IsChecked="{Binding IsSelected, Mode=TwoWay}"/>
+ </DataTemplate>
+ </ItemsControl.ItemTemplate>
+ </ItemsControl>
+ </ScrollViewer>
+ </Grid>
+ </Border>
+ </DataTemplate>
+ </ItemsControl.ItemTemplate>
+ </ItemsControl>
+ <!-- Plus button -->
+ <Button Content="+" Width="24" Height="24" Margin="4,0,0,0" VerticalAlignment="Top" Command="{Binding AddFilterPanelCommand}"/>
+ </StackPanel>
+ </ScrollViewer>
+
+ <!-- Data preview -->
+ <Grid Grid.Row="2" Margin="12">
+ <Grid.RowDefinitions>
+ <RowDefinition Height="Auto"/>
+ <RowDefinition Height="*"/>
+ </Grid.RowDefinitions>
+ <TextBlock Grid.Row="0" Text="Data Preview" FontSize="18" FontWeight="Bold" Margin="0,0,0,12"/>
+ <DataGrid Grid.Row="1" ItemsSource="{Binding PreviewView}" AutoGenerateColumns="True" IsReadOnly="True"/>
+ </Grid>
+ </Grid>
+</UserControl>
