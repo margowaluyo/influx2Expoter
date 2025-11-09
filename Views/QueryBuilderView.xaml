@@ -1,11 +1,11 @@
 <UserControl x:Class="influx2Exporter.Views.QueryBuilderView"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
- xmlns:lc="clr-namespace:influx2Exporter.Views.Controls">
+ xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
  <Grid>
  <Grid.RowDefinitions>
  <RowDefinition Height="Auto"/>
- <RowDefinition Height="Auto"/>
+ <RowDefinition Height="300"/>
  <RowDefinition Height="*"/>
  </Grid.RowDefinitions>
 
@@ -19,37 +19,49 @@
  <TextBlock Text="Query Builder" FontSize="18" FontWeight="Bold" VerticalAlignment="Center"/>
  <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="24,0,0,0" VerticalAlignment="Center">
  <TextBlock Text="Time range" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,6,0"/>
- <!-- Use custom DateTimePicker control with correct namespace and DP name -->
- <lc:DateTimePicker Value="{Binding FromDateTime}" Width="220" Margin="0,0,6,0"/>
+ <!-- Extended WPF Toolkit DateTimePicker supports seconds; show custom format -->
+ <xctk:DateTimePicker Value="{Binding FromDateTime}" Width="240" Format="Custom" FormatString="yyyy-MM-dd HH:mm:ss" TimeFormat="Custom" TimeFormatString="HH:mm:ss" ShowDropDownButton="True" AllowTextInput="False" Margin="0,0,6,0"/>
  <TextBlock Text="to" FontWeight="Bold" VerticalAlignment="Center" Margin="12,0,6,0"/>
- <lc:DateTimePicker Value="{Binding ToDateTime}" Width="220"/>
+ <xctk:DateTimePicker Value="{Binding ToDateTime}" Width="240" Format="Custom" FormatString="yyyy-MM-dd HH:mm:ss" TimeFormat="Custom" TimeFormatString="HH:mm:ss" ShowDropDownButton="True" AllowTextInput="False"/>
  </StackPanel>
  <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
- <Button Content="Add to Template" Padding="12,6" Margin="0,0,8,0" Background="#0A84FF" Foreground="White" BorderBrush="#0A84FF"/>
+ <Button Content="Add to Template" Padding="12,6" Margin="8,0,8,0" Background="#0A84FF" Foreground="White" BorderBrush="#0A84FF"/>
  <Button Content="Submit Query" Padding="12,6" Background="#2E7D32" Foreground="White" BorderBrush="#2E7D32" Command="{Binding SubmitQueryCommand}"/>
  </StackPanel>
  </Grid>
  </Border>
 
  <!-- Panels -->
- <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Height="220" Background="#14141A" Padding="12">
+ <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Background="#14141A" Padding="12">
  <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
  <ItemsControl ItemsSource="{Binding Panels}">
  <ItemsControl.ItemsPanel>
- <ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate>
+ <ItemsPanelTemplate>
+ <StackPanel Orientation="Horizontal"/>
+ </ItemsPanelTemplate>
  </ItemsControl.ItemsPanel>
  <ItemsControl.ItemTemplate>
  <DataTemplate>
  <Border Width="260" Margin="0,0,12,0" Background="#1E1E24" Padding="8" BorderBrush="#2E2E33" BorderThickness="1" CornerRadius="4">
  <Grid>
- <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+ <Grid.RowDefinitions>
+ <RowDefinition Height="Auto"/>
+ <RowDefinition Height="Auto"/>
+ <RowDefinition Height="*"/>
+ </Grid.RowDefinitions>
  <DockPanel Grid.Row="0">
  <ComboBox DockPanel.Dock="Left" ItemsSource="{Binding DataContext.AvailableFieldNames, RelativeSource={RelativeSource AncestorType=UserControl}}" SelectedItem="{Binding SelectedName, Mode=TwoWay}" MinWidth="180" MaxDropDownHeight="300"/>
  <Button DockPanel.Dock="Right" Content="-" Width="22" Height="22" Margin="6,0,0,0" Command="{Binding DataContext.RemoveFilterPanelCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
  </DockPanel>
  <TextBox Grid.Row="1" Margin="0,6,0,6" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
  <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
- <ItemsControl ItemsSource="{Binding ValuesView}"><ItemsControl.ItemTemplate><DataTemplate><CheckBox Content="{Binding Value}" IsChecked="{Binding IsSelected, Mode=TwoWay}" Foreground="#ddd"/></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+ <ItemsControl ItemsSource="{Binding ValuesView}">
+ <ItemsControl.ItemTemplate>
+ <DataTemplate>
+ <CheckBox Content="{Binding Value}" IsChecked="{Binding IsSelected, Mode=TwoWay}" Foreground="#ddd"/>
+ </DataTemplate>
+ </ItemsControl.ItemTemplate>
+ </ItemsControl>
  </ScrollViewer>
  </Grid>
  </Border>
@@ -61,17 +73,28 @@
  </ScrollViewer>
 
  <!-- Preview -->
- <Grid Grid.Row="2" Margin="12">
- <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+ <Grid Grid.Row="2" Margin="12,12,12,12">
+ <Grid.RowDefinitions>
+ <RowDefinition Height="Auto"/>
+ <RowDefinition Height="*"/>
+ </Grid.RowDefinitions>
  <DockPanel Grid.Row="0" Margin="0,0,0,8">
- <TextBlock Text="Data Preview" FontSize="18" FontWeight="Bold" DockPanel.Dock="Left"/>
+ <TextBlock Text="Data Preview" FontSize="18" FontWeight="Bold" DockPanel.Dock="Left" Margin="0,0,12,0"/>
  <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
- <Button Content="Export CSV" Padding="10,4" Margin="0,0,8,0" Command="{Binding ExportCsvCommand}"/>
- <Button Content="Export Excel" Padding="10,4" Command="{Binding ExportExcelCommand}"/>
+ <Button Content="Export CSV" Padding="10,4" Margin="0,0,8,0" Command="{Binding ExportCsvCommand}" Background="CadetBlue" Foreground="White" BorderBrush="#2E7D32"/>
+ <Button Content="Export Excel" Padding="10,4" Command="{Binding ExportExcelCommand}" Background="#2E7D32" Foreground="White" BorderBrush="#2E7D32"/>
  </StackPanel>
  </DockPanel>
  <DataGrid Grid.Row="1" ItemsSource="{Binding PreviewView}" AutoGenerateColumns="True" IsReadOnly="True" HeadersVisibility="Column" GridLinesVisibility="Horizontal" AlternatingRowBackground="#F3F6FA" RowBackground="White" BorderBrush="#C7C7C7" BorderThickness="1" RowHeight="24" FontSize="12">
- <DataGrid.Resources><Style TargetType="DataGridColumnHeader"><Setter Property="Background" Value="#e2e6ea"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="BorderBrush" Value="#C7C7C7"/><Setter Property="BorderThickness" Value="0,0,1,1"/><Setter Property="Padding" Value="6,3"/></Style></DataGrid.Resources>
+ <DataGrid.Resources>
+ <Style TargetType="DataGridColumnHeader">
+ <Setter Property="Background" Value="#e2e6ea"/>
+ <Setter Property="FontWeight" Value="SemiBold"/>
+ <Setter Property="BorderBrush" Value="#C7C7C7"/>
+ <Setter Property="BorderThickness" Value="0,0,1,1"/>
+ <Setter Property="Padding" Value="6,3"/>
+ </Style>
+ </DataGrid.Resources>
  </DataGrid>
  </Grid>
  </Grid>
